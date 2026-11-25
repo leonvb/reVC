@@ -2,12 +2,12 @@ name: reVC Android
 
 on:
   push:
-    branches: [ "miami", "dev" ]
+    branches: [ "miami" ]
     paths:
       - 'android/launcher/**'
       - 'src/**'
   pull_request:
-    branches: [ "miami", "dev" ]
+    branches: [ "miami" ]
     paths:
       - 'android/launcher/**'
       - 'src/**'
