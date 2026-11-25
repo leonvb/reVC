@@ -90,7 +90,7 @@ Clone the repository with `git clone --recursive -b miami https://github.com/mrx
 
 <details><summary>Android</summary>
 
-For Android using Android Studio, proceed: [Building on Android](https://github.com/mrxenginner/reVC/wiki/Building-on-Android)
+For Android using Android Studio, proceed: [Building on Android](https://github.com/mrxenginner/reVC/wiki/Building-on-Android). GitHub Actions APK build instructions and game-data setup: [android/README.md](android/README.md).
 
 </details>
 

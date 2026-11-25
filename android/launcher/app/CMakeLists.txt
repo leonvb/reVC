@@ -48,7 +48,14 @@ if(IS_DIRECTORY "${REVC_GAME_DIR}" AND EXISTS "${REVC_GAME_DIR}/CMakeLists.txt")
     message(" *  🚀 Initiating Game module build configuration...")
     message("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     message(" ")
-    #add_subdirectory(${REVC_GAME_DIR} ${CMAKE_BINARY_DIR}/game_build)
+    # Android does not use Conan to resolve the game engine's shared
+    # dependencies. Point the existing find_package() modules at the ABI-specific
+    # prebuilts shipped in vendor/ before configuring the game target.
+    list(APPEND CMAKE_MODULE_PATH "${REVC_GAME_DIR}/cmake/android")
+    include(AndroidConfig)
+
+    # Build reVC as a shared library so SDLActivity can load it from the APK.
+    add_subdirectory(${REVC_GAME_DIR} ${CMAKE_BINARY_DIR}/game_build)
 else()
     message(" *  ⚠️ Game source directory or CMakeLists.txt not found at: ${REVC_GAME_DIR}")
     message(FATAL_ERROR " *  ❗ Please ensure the game module sources are available for the build.")

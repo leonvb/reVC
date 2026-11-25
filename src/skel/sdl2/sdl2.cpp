@@ -1400,6 +1400,12 @@ main(int argc, char *argv[])
             setenv("STORAGE_ROOT", gamePath, 1);
         }
     }
+#if defined(ANDROID)
+    // Android's filesystem helpers use this pointer directly; setting only the
+    // environment variable leaves it null and causes startup to fail before
+    // the game can open its data files.
+    StorageRootBuffer = getenv("STORAGE_ROOT");
+#endif
 
     /*
      * Initialize the platform independent data.

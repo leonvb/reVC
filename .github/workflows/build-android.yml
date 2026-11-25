@@ -1,47 +1,28 @@
 name: reVC Android
 
+# All repository workflows are intentionally manual-only. Use Actions > reVC
+# Android > Run workflow and select the branch to build.
 on:
-  push:
-    branches: [ "miami" ]
-    paths:
-      - 'android/launcher/**'
-      - 'src/**'
-  pull_request:
-    branches: [ "miami" ]
-    paths:
-      - 'android/launcher/**'
-      - 'src/**'
-  release:
-    types: published 
-
   workflow_dispatch:
 
 permissions:
   contents: read
-  actions: write
-  
+
 jobs:
   build-android:
     name: Build Android APK (${{ matrix.variant }})
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
         variant: [debug, release]
 
-    defaults:
-      run:
-        working-directory: android/launcher
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
         with:
-          clean: true
           submodules: recursive
           fetch-depth: 0
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -50,33 +31,19 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Declare build version
-        id: vars
-        shell: bash
-        env:
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Set up Gradle cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+      - name: Install Android build components
+        run: sdkmanager "platforms;android-35" "ndk;27.2.12479018" "cmake;3.22.1"
 
-      - name: Clean build (manual only)
-        if: github.event_name == 'workflow_dispatch'
-        run: ./gradlew clean
-
-      - name: Set assemble task name
-        run: echo "ASSEMBLE_TASK=assemble${{ matrix.variant == 'debug' && 'Debug' || 'Release' }}" >> $GITHUB_ENV
+      - name: Make Gradle wrapper executable
+        working-directory: android/launcher
+        run: chmod +x ./gradlew
 
       - name: Build ${{ matrix.variant }} APK
-        run: ./gradlew $ASSEMBLE_TASK --no-daemon --stacktrace --parallel --build-cache
+        working-directory: android/launcher
+        run: ./gradlew --no-daemon --stacktrace --build-cache assemble${{ matrix.variant == 'debug' && 'Debug' || 'Release' }}
 
       - name: Upload ${{ matrix.variant }} APK
         uses: actions/upload-artifact@v4
@@ -84,3 +51,4 @@ jobs:
           name: revc-${{ matrix.variant }}
           path: android/launcher/app/build/outputs/apk/${{ matrix.variant }}/app-${{ matrix.variant }}.apk
           if-no-files-found: error
+          retention-days: 14
